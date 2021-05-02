@@ -1,12 +1,3 @@
-# Datasets
-[Bank Climate Change](https://www.ran.org/bankingonclimatechange2020/)
-* Small dataset that shows Fossil Fuel funding for 36 banks from 2016 - 2019. 
-
-[Sustainable Finance Commitments](https://www.wri.org/finance/banks-sustainable-finance-commitments/)
-* Dataset contains detailed overview of bank sustainability commitments, including, but not limited to: commitment amount, whether a timeline is provided and what the timeline is, description of the commitment, etc. 
-
-
-
 # Questions/follow up : 
 there is a value for applicant sex: "applicant selected both male and female". This value makes up ~0.05% of the dataset. I'm wondering if this was a way that people indicated on the form that they identify as non-binary, or if it was an accidental button click. 35% of adults in the US identify as nonbinary, so certainly the proportions don't line up. Will keep this in the dataset for now, determine how to interpret later. 
 
