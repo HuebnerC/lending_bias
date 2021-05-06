@@ -18,3 +18,28 @@ Removed nearly all co-applicant information. It's well known that adding a co-ap
 Because a goal of this project is to streamline data prep-processing, I did a deeper dive into how to handle missing values. According to Yiran Dong and Chao-Ying, a missing value ratio of up to 5% does not affect the bias of the dataset. According to Paul Madley-Dowd, Rachael Hughes, KateTilling, Jon Heron, a missing value ratio of up to 10% is acceptable, so long as the data is missing at random. 
 * First, I created a function that would calculate the missing value ratio of all columns and dropped null values that comprised less than 5% of the dataset. 
 * Next, I looked at the remaining features with missing value ratios above 5% to determine if values were missing at random. To do this, I created dataframes comprised of the rows containing missing values for each of the features over the acceptable missing value ratio threshold. Then, I compared the summary statistics for each of these dataframes with the summary statistics for the original dataframe. I focused on the mean and the standard deviation. Overall, the missing value subset for census tract, applicant sex, and applicant race-1 showed that the mean and standard deviation were fairly similar across all fields of interest. Conclusion: data appears to be missing at random. 
+
+# Modeling
+*Class Imbalance*: To handle class imbalance: 
+* Metric chosen: 
+    - Training a model on accuracy will simply predict the majority class in an imbalanced dataset. 
+    - Training a model using kappa _______
+    - ROC-AUC with threshold moving
+
+# Web App Development
+### Objectives
+* Create an app that predicts the likelihood of approval for ten banks
+* Allow users to filter results by environmental stewardship and equitable lending rank, and by loan term conditions
+
+### Lending Institutions
+The following ten banks were selected, as they [originated the most loans in 2019](https://www.housingwire.com/articles/here-are-the-top-10-mortgage-lenders-of-2019/), the same year data was pulled: 
+* US Bank
+* Freedom Mortgage
+* Bank of America
+* Caliber Home Loans
+* loanDepot
+* Fairway independent mortgage
+* JPMorgan Chase
+* Wells Fargo
+* United Wholesale Mortgage
+* Quicken Loans
