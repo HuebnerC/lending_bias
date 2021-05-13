@@ -14,22 +14,50 @@ Quicken has a large number of nans for the derived sex, ethnicity, and race colu
 
 Removed nearly all co-applicant information. It's well known that adding a co-applicant if you're approval likelihood is low will improve your chances, assuming the co-applicant is qualified. The only information about the co-applicant was protected classes. Will use feature engineering to add "co-applicant minority race, gender, ethnicity" or used the derived version of these from the dataset columns, if it looks like what I need. 
 
+App doesn't account for exceptions to the nonconforming loan limit
+
 # Missing Values
 Because a goal of this project is to streamline data prep-processing, I did a deeper dive into how to handle missing values. According to Yiran Dong and Chao-Ying, a missing value ratio of up to 5% does not affect the bias of the dataset. According to Paul Madley-Dowd, Rachael Hughes, KateTilling, Jon Heron, a missing value ratio of up to 10% is acceptable, so long as the data is missing at random. 
 * First, I created a function that would calculate the missing value ratio of all columns and dropped null values that comprised less than 5% of the dataset. 
 * Next, I looked at the remaining features with missing value ratios above 5% to determine if values were missing at random. To do this, I created dataframes comprised of the rows containing missing values for each of the features over the acceptable missing value ratio threshold. Then, I compared the summary statistics for each of these dataframes with the summary statistics for the original dataframe. I focused on the mean and the standard deviation. Overall, the missing value subset for census tract, applicant sex, and applicant race-1 showed that the mean and standard deviation were fairly similar across all fields of interest. Conclusion: data appears to be missing at random. 
 
 # Modeling
+While I had already implemented a Random Forest model in the first run through Wells Fargo data, I decided that for the purpose of the web app, I wanted the model to be more easily interpretable. Using Logistic Regression, I wasn't able to get a model to converge. Logistic Regression uses gradient descent as the solver, which looks at every sample in the dataset at every iteration. Stochastic Gradient Descent looks only at one sample at a time, making it much faster for large datasets (greater than 100,000 observations) and with sparse matrices. 
+
 *Class Imbalance*: To handle class imbalance: 
-* Metric chosen: 
-    - Training a model on accuracy will simply predict the majority class in an imbalanced dataset. 
-    - Training a model using kappa _______
+* Metric chosen: F1 Score
+    - Training a model on accuracy will simply predict the majority class in an imbalanced dataset. Balancing precision and recall is the better choice here, because it looks at the fp and fn values. 
+    - 
     - ROC-AUC with threshold moving
+    - 
+* Random Undersampling (RUS) 
+
+    Because the datasets have hundreds of thousands of samples, I performed undersampling of the majority class. 
+
+* Profit Curve
+    * First, I created a cost-benefit matrix
+
+True Class
+| Positive      | Negative|
+| ----------- | ----------- |
+| TP: predicted approved actually approved + $145K | FP: predicted approved actually denied -$50K|
+| TN: predicted denied actually denied -$0  | FN: app predicted denied was actually approved -$145K|
+
+* Model chosen: Stochastic Gradient Descent using log loss
+    * Useful in sparse matrices that have more than 10^5 observations. 
+    * Uses logistic regression, which is more interpretable. 
+
 
 # Web App Development
 ### Objectives
 * Create an app that predicts the likelihood of approval for ten banks
 * Allow users to filter results by environmental stewardship and equitable lending rank, and by loan term conditions
+* Compatability issues
+    - column name changes
+    - different inputs for each model, to streamline this, tried running models without certain features that would be difficult or impossible to gather from a user:
+        - type of underwriting system
+        - race/ethnicity observed by the banker
+        - little to no effect on model performance after these deletions (less than a 2% change)
 
 ### Lending Institutions
 The following ten banks were selected, as they [originated the most loans in 2019](https://www.housingwire.com/articles/here-are-the-top-10-mortgage-lenders-of-2019/), the same year data was pulled: 
