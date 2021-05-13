@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from io import BytesIO
 import censusgeocode as cg
-%store -r enc_age_arr
+
 
 
 # Initialize app
@@ -33,12 +33,16 @@ with open('Fair_model.pkl', 'rb') as f:
 with open('cal_model.pkl', 'rb') as f:
     cal = pickle.load(f)
 
+with open('enc.pkl', 'rb') as f:
+    enc = pickle.load(f)
+
+
 # Home page with form on it to submit new data
 @app.route('/')
 def get_new_data():
     return '''
         <form action="/predict" method='POST'>
-          Property Address:<br>
+          Property Address in this format: '1600 Pennsylvania Avenue, Washington, DC'<br>
           <input type="text" name="address"> 
           <br><br>
           Is the loan amount greater than $548,250? (y or n) <br>
@@ -46,6 +50,9 @@ def get_new_data():
           <br><br>
           1 - Manufactured home or 2 - site-built?:<br>
           <input type="text" name="derived_dwelling_category"> 
+          <br><br>
+          1 - Manufactured home or 2 - site-built?:<br>
+          <input type="text" name="construction_method"> 
           <br><br>
           Applicant ethnicity: 1- Hispanic Hispanic or Latino 2- Not Hispanic or Latino 3- Joint<br>
           <input type="text" name="derived_ethnicity"> 
@@ -84,18 +91,12 @@ def get_new_data():
           <input type="submit" value="Submit for mortgage approval predictions">
         </form>
         '''
-# user_input_fields = ['census_tract', 'conforming_loan_limit', 'derived_dwelling_category',
-#        'derived_ethnicity', 'derived_race', 'derived_sex', 'action_taken',
-#        'loan_type', 'loan_amount', 'loan_to_value_ratio', 'loan_term',
-#        'construction_method', 'income', 'debt_to_income_ratio',
-#        'applicant_age']
-
 
 @app.route('/predict', methods = ["GET", "POST"])
 def predict():
     # request the text from the form 
-    address = float(request.form['address'])
-    conforming_loan_limit = float(request.form['conforming_loan_limit'])
+    address = str(request.form['address'])
+    conforming_loan_limit = str(request.form['conforming_loan_limit'])
     derived_dwelling_category = float(request.form['derived_dwelling_category'])
     derived_ethnicity = float(request.form['derived_ethnicity'])
     derived_race = float(request.form['derived_race'])
@@ -104,18 +105,19 @@ def predict():
     loan_amount = float(request.form['loan_amount'])
     down_payment = float(request.form['down_payment'])
     loan_term = float(request.form['loan_term'])
+    construction_method = float(request.form['construction_method'])
     income = float(request.form['income'])
     monthly_debt = float(request.form['monthly_debt'])
     applicant_age = float(request.form['applicant_age'])
     
 #   Convert address to Census Tract Number
-    address = cg.onelineaddress('1600 Pennsylvania Avenue, Washington, DC', returntype='geographies')
+    address = cg.onelineaddress(str(address), returntype='geographies')
     address = address[1].get('geographies')
     census_tracts = address.get('Census Tracts')[0]
     state = census_tracts.get('STATE')
     county = census_tracts.get('COUNTY')
     tract = census_tracts.get('TRACT')
-    tract_number = int(state+county+tract)
+    census_tract = int(state+county+tract)
     
 #   Convert user inputs to be compatible with data preprocessing script
     if conforming_loan_limit.isin(['y', 'yes', 'Yes', 'Y']): 
@@ -154,11 +156,7 @@ def predict():
     
     debt_to_income_ratio = monthly_debt/income
                                   
-    X_user = np.array([tract_number, conforming_loan_limit, derived_dwelling_category, derived_ethnicity,
-                      derived_race, derived_sex, loan_type, loan_amount, loan_to_value_ratio, loan_term,
-                      income, debt_to_income_ratio, applicant_age])
-    
-#     Put DIR in bin
+    # Put DIR in bin
     if debt_to_income_ratio < 20:
         debt_to_income_ratio = 15
     if debt_to_income_ratio in range(20,30): 
@@ -169,12 +167,44 @@ def predict():
         debt_to_income_ratio = 55
     else:
         debt_to_income_ratio = debt_to_income_ratio
-        
-# Put age in bin
-
+    
+    #hardcode age for now, will troubleshoot OrdinalEncoder later
+#     applicant_age = np.int64(3.0)
+    X_user_raw = np.array([census_tract, conforming_loan_limit, derived_dwelling_category, derived_ethnicity,
+                      derived_race, derived_sex, loan_type, loan_amount, loan_to_value_ratio, loan_term,
+                      construction_method,income, debt_to_income_ratio, applicant_age])
+    
+#     # Create dataframe for user
+    columns = ['census_tract', 'conforming_loan_limit', 'derived_dwelling_category', 
+                    'derived_ethnicity','derived_race', 'derived_sex', 'loan_type', 'loan_amount', 
+                   'loan_to_value_ratio', 'loan_term', 'income', 'debt_to_income_ratio', 'applicant_age']
+    X_user = pd.DataFrame(X_user_raw, columns= columns)
+    # Not working - Ordinal encoding for age
+#     enc_age_arr = enc.transform(X_user[['applicant_age']].to_numpy())
+#     X_user['applicant_age'] = enc_age_arr
+    
+#     Get dummies
+    categorical_cols = ['census_tract', 'conforming_loan_limit', 'derived_dwelling_category', 'derived_ethnicity', 
+                        'derived_race', 'derived_sex', 'loan_type', 'construction_method']
+                          
+    X_user = pd.get_dummies(X_user, columns = categorical_cols)
+    dummies_to_drop = ['derived_sex_Female', 'conforming_loan_limit_NC', 'construction_method_2', 
+                       'derived_dwelling_category_Single Family (1-4 Units):Manufactured', 
+                       'derived_ethnicity_Not Hispanic or Latino']
+    X_user = X_user.drop(dummies_to_drop, axis=1)
+    
+    
+    
     # predict on the new data
-    y_pred = model.predict(X_user)
-
+    model_lst = [boa, wells, chase, USB, LD, fair, cal]
+    prob_lst = []
+    for model in model_lst: 
+        y_pred = model.predict(X_user)
+        prob_lst.append(y_pred)
+    
+    return prob_lst
+    
+    
 #     # for plotting 
 #     X_0 = trainX[trainY == 0] # class 0
 #     X_1 = trainX[trainY == 1] # class 1
