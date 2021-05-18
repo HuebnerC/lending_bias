@@ -47,18 +47,33 @@ True Class
     * Useful in sparse matrices that have more than 10^5 observations. 
     * Uses logistic regression, which is more interpretable. 
 
+* Metrics for Threshold Determination for each bank
+
+False negative cost was calculated assuming the bank would miss out on an opportunity cost equal to the potential loan profit multiplied by the bank's market share. To estimate market share, I used the ratio of each bank's total residential mortgage backed security issuance to the total [RMBS issuance in 2019](https://www.statista.com/statistics/275746/rmbs-issuance-in-the-united-states/): $139.7 billion. 
+    * Wells Fargo
+        * Wells Fargo tends to retain most mortgages in house rather than sell them
+        * $159,523 million in mortgage-backed security earnings (interest)
+        * $2,193 million in net gains on mortgage loan origination/sale
+        * $2.4 billion RMBS
+    * Bank of America
+        * RMBS: 
+    * US Bank
+        * RMBS: $16.292 billion
+
 
 # Web App Development
 ### Objectives
 * Create an app that predicts the likelihood of approval for ten banks
 * Allow users to filter results by environmental stewardship and equitable lending rank, and by loan term conditions
-* Compatability issues
+* Compatability issues/updates needed in the future
     - column name changes
     - different inputs for each model, to streamline this, tried running models without certain features that would be difficult or impossible to gather from a user:
         - type of underwriting system
         - race/ethnicity observed by the banker
         - little to no effect on model performance after these deletions (less than a 2% change)
+        - Conforming loan limit changes annually, new bank data released annually, census tracts redrawn 
 
+* One-hot encoded user responses manually. I couldn't process user responses as I would with a set of data, which I could pull randomly, and then insert the user response into the dataframe preprocess it, then pull the record back out and feed it into the model. In order to preserve model performance, 
 ### Lending Institutions
 The following ten banks were selected, as they [originated the most loans in 2019](https://www.housingwire.com/articles/here-are-the-top-10-mortgage-lenders-of-2019/), the same year data was pulled: 
 * US Bank
