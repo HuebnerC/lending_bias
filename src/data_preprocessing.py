@@ -26,3 +26,15 @@ def drop_irrelevant_columns(df):
                   'co-applicant_ethnicity-5', 'activity_year', 'lei', 'multifamily_affordable_units', 
                   'aus-2', 'aus-3', 'aus-4', 'aus-5']
     quicken_df = quicken_df.drop(drop_irrelevant, axis=1)
+
+def get_dumms(df):
+    categorical_cols = ['census_tract', 'conforming_loan_limit', 'derived_dwelling_category', 'derived_ethnicity', 
+                      'derived_race', 'derived_sex', 'loan_type', 'construction_method']
+
+def variable_encoding(df):
+    
+    DIR_mapper = {'20%-<30%': 25, '30%-<36%': 33, '>60%': 65, '<20%': 15, '50%-60%': 55}
+
+
+quicken_df['debt_to_income_ratio'] = quicken_df['debt_to_income_ratio'] \
+                                    .map(lambda x: DIR_mapper[x] if x in DIR_mapper else int(x), na_action='ignore')
